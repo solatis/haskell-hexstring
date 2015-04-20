@@ -1,6 +1,6 @@
 name: hexstring
 category: Data
-version: 0.9.0
+version: 0.10.0
 license: MIT
 license-file: LICENSE
 copyright: (c) 2015 Leon Mergen
@@ -11,9 +11,8 @@ bug-reports: http://github.com/solatis/haskell-hexstring/issues
 stability: experimental
 synopsis: Fast and safe representation of a hex string
 description:
-            Provides an interface for representing a HexString. It uses fast conversion
-            functions to convert to-and-from String or Text formats. Internally, the
-            HexString is represented by a ByteString.
+            Provides an interface for converting any object that has a 'Binary' instance
+            to and from a hexadecimal Text representation.
                       
 build-type: Simple
 data-files: LICENSE, README.md
