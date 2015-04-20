@@ -28,6 +28,7 @@ library
   exposed-modules:     Data.HexString
   
   build-depends:       base                     >= 4.3          && < 5
+                     , binary 
                      , text
                      , bytestring
                      , base16-bytestring
@@ -48,6 +49,8 @@ test-suite test-suite
                      , text
 
                      , bytestring
+                     , binary
+                     
                      , hexstring
 
 source-repository head
