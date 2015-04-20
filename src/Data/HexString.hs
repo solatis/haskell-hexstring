@@ -32,7 +32,7 @@ hexString bs =
         | otherwise              = False
 
   in if   BS.all isValidHex bs
-     then (HexString bs)
+     then HexString bs
      else error ("Not a valid hex string: " ++ show bs)
 
 -- | Converts a 'B.Binary' to a 'HexString' value
