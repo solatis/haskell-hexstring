@@ -1,4 +1,8 @@
-module Data.HexString where
+module Data.HexString ( HexString (..)
+                      , decodeText
+                      , decodeString
+                      , encodeText
+                      , encodeString ) where
 
 import           Control.Applicative         ((<$>))
 
@@ -26,10 +30,6 @@ instance B.Binary HexString where
   get                = HexString <$> B.getRemainingLazyByteString
   put (HexString bs) = B.putLazyByteString bs
 
--- | Converts `BSL.ByteString` to a `HexString`
-decodeByteString :: BSL.ByteString -> HexString
-decodeByteString = B.decode . fst . BS16L.decode
-
 -- | Converts a `T.Text` representation to a `HexString`
 decodeText :: T.Text -> HexString
 decodeText = decodeByteString . BSL.fromStrict . TE.encodeUtf8
@@ -38,10 +38,6 @@ decodeText = decodeByteString . BSL.fromStrict . TE.encodeUtf8
 decodeString :: String -> HexString
 decodeString = decodeByteString . BSL8.pack
 
--- | Converts a `HexString` to a `BSL.ByteString`
-encodeByteString :: HexString -> BSL.ByteString
-encodeByteString = BS16L.encode . B.encode
-
 -- | Converts a `HexString` to a `T.Text` representation
 encodeText :: HexString -> T.Text
 encodeText = TE.decodeUtf8 . BSL.toStrict . encodeByteString
@@ -49,3 +45,13 @@ encodeText = TE.decodeUtf8 . BSL.toStrict . encodeByteString
 -- | Converts a `HexString` to a `String` representation
 encodeString :: HexString -> String
 encodeString = BSL8.unpack . encodeByteString
+
+
+
+-- | Internal function that converts a `HexString` to a `BSL.ByteString`
+encodeByteString :: HexString -> BSL.ByteString
+encodeByteString = BS16L.encode . B.encode
+
+-- | Internal funcion that converts `BSL.ByteString` to a `HexString`
+decodeByteString :: BSL.ByteString -> HexString
+decodeByteString = B.decode . fst . BS16L.decode

@@ -13,13 +13,9 @@ spec :: Spec
 spec = do
   describe "when decoding hex data" $ do
     it "should be able to parse basic hex data" $ do
-      (B.encode . decodeByteString) (BSL8.pack "ffff") `shouldBe` BSL8.pack "\255\255"
-      (B.encode . decodeString) "ffff"                 `shouldBe` BSL8.pack "\255\255"
-      (B.encode . decodeText) (T.pack "ffff")          `shouldBe` BSL8.pack "\255\255"
+      (B.encode . decodeString) "ffff"        `shouldBe` BSL8.pack "\255\255"
+      (B.encode . decodeText) (T.pack "ffff") `shouldBe` BSL8.pack "\255\255"
 
-    it "should be able to recode basic hex data to different formats" $
-      let hex = BSL8.pack "ffff"
-      in do
-        (encodeText . decodeByteString) hex       `shouldBe` T.pack "ffff"
-        (encodeString . decodeByteString) hex     `shouldBe` "ffff"
-        (encodeByteString . decodeByteString) hex `shouldBe` BSL8.pack "ffff"
+    it "should be able to recode basic hex data to different formats" $ do
+        (encodeText . decodeString) "ffff"   `shouldBe` T.pack "ffff"
+        (encodeString . decodeString) "ffff" `shouldBe` "ffff"
