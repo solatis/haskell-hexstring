@@ -1,57 +1,48 @@
-module Data.HexString ( HexString (..)
-                      , decodeText
-                      , decodeString
-                      , encodeText
-                      , encodeString ) where
+module Data.HexString ( HexString
+                      , hexString
+                      , toHex
+                      , fromHex
+                      , asText ) where
 
-import           Control.Applicative         ((<$>))
+import           Data.Word                   (Word8)
 
-import qualified Data.ByteString.Base16.Lazy as BS16L (decode, encode)
-import qualified Data.ByteString.Lazy.Char8  as BSL8
-import qualified Data.ByteString.Lazy        as BSL
+import qualified Data.ByteString.Base16 as BS16 (decode, encode)
+import qualified Data.ByteString        as BS
+import qualified Data.ByteString.Lazy   as BSL
 
-import qualified Data.Text                   as T
-import qualified Data.Text.Encoding          as TE
+import qualified Data.Text              as T
+import qualified Data.Text.Encoding     as TE
 
-import qualified Data.Binary                 as B (Binary, decode, encode, get,
-                                                   put)
-import qualified Data.Binary.Get             as B (getRemainingLazyByteString)
-import qualified Data.Binary.Put             as B (putLazyByteString)
+import qualified Data.Binary            as B (Binary, decode, encode)
 
--- | Data type representing a HexString.
-data HexString
-  = HexString BSL.ByteString
+-- | Represents a Hex string. Guarantees that all characters it contains
+--   are valid hex characters.
+data HexString =
+  HexString BS.ByteString
   deriving ( Show, Eq, Ord )
 
--- | Allows us to convert to and from a `B.Binary` representation. Always
---   assumes that the entire binary string that is fed to `Binary.decode`
---   represents the hex string.
-instance B.Binary HexString where
-  get                = HexString <$> B.getRemainingLazyByteString
-  put (HexString bs) = B.putLazyByteString bs
+-- | Smart constructor which validates that all the text are actually
+--   hexadecimal characters.
+hexString :: BS.ByteString -> HexString
+hexString bs =
+  let isValidHex :: Word8 -> Bool
+      isValidHex c
+        | (48 <= c) && (c < 58)  = True
+        | (97 <= c) && (c < 103) = True
+        | otherwise              = False
 
--- | Converts a `T.Text` representation to a `HexString`
-decodeText :: T.Text -> HexString
-decodeText = decodeByteString . BSL.fromStrict . TE.encodeUtf8
+  in if   BS.all isValidHex bs
+     then (HexString bs)
+     else error ("Not a valid hex string: " ++ show bs)
 
--- | Converts a `String` representation to a `HexString`
-decodeString :: String -> HexString
-decodeString = decodeByteString . BSL8.pack
+-- | Converts a 'B.Binary' to a 'HexString' value
+toHex :: B.Binary a  => a -> HexString
+toHex = hexString . BS16.encode . BSL.toStrict . B.encode
 
--- | Converts a `HexString` to a `T.Text` representation
-encodeText :: HexString -> T.Text
-encodeText = TE.decodeUtf8 . BSL.toStrict . encodeByteString
+-- | Converts a 'HexString' to a 'B.Binary' value
+fromHex :: B.Binary a => HexString -> a
+fromHex (HexString bs) = B.decode . BSL.fromStrict . fst . BS16.decode $ bs
 
--- | Converts a `HexString` to a `String` representation
-encodeString :: HexString -> String
-encodeString = BSL8.unpack . encodeByteString
-
-
-
--- | Internal function that converts a `HexString` to a `BSL.ByteString`
-encodeByteString :: HexString -> BSL.ByteString
-encodeByteString = BS16L.encode . B.encode
-
--- | Internal funcion that converts `BSL.ByteString` to a `HexString`
-decodeByteString :: BSL.ByteString -> HexString
-decodeByteString = B.decode . fst . BS16L.decode
+-- | Access to a 'T.Text' representation of the 'HexString'
+asText :: HexString -> T.Text
+asText (HexString bs) = TE.decodeUtf8 bs
