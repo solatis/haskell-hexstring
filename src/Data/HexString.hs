@@ -6,10 +6,13 @@ module Data.HexString ( HexString
                       , toBytes
                       , toText ) where
 
-import           Data.Word                   (Word8)
+import           Control.Applicative    (pure)
 
-import qualified Data.ByteString.Base16 as BS16 (decode, encode)
+import           Data.Aeson
+import           Data.Word              (Word8)
+
 import qualified Data.ByteString        as BS
+import qualified Data.ByteString.Base16 as BS16 (decode, encode)
 import qualified Data.ByteString.Lazy   as BSL
 
 import qualified Data.Text              as T
@@ -22,6 +25,12 @@ import qualified Data.Binary            as B (Binary, decode, encode)
 data HexString =
   HexString BS.ByteString
   deriving ( Show, Eq, Ord )
+
+instance FromJSON HexString where
+  parseJSON = withText "HexString" $ pure . hexString . TE.encodeUtf8
+
+instance ToJSON HexString where
+  toJSON = String . toText
 
 -- | Smart constructor which validates that all the text are actually
 --   hexadecimal characters.
