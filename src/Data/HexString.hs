@@ -1,8 +1,10 @@
 module Data.HexString ( HexString
                       , hexString
-                      , toHex
-                      , fromHex
-                      , asText ) where
+                      , fromBinary
+                      , toBinary
+                      , fromBytes
+                      , toBytes
+                      , toText ) where
 
 import           Data.Word                   (Word8)
 
@@ -36,13 +38,23 @@ hexString bs =
      else error ("Not a valid hex string: " ++ show bs)
 
 -- | Converts a 'B.Binary' to a 'HexString' value
-toHex :: B.Binary a  => a -> HexString
-toHex = hexString . BS16.encode . BSL.toStrict . B.encode
+fromBinary :: B.Binary a  => a -> HexString
+fromBinary = hexString . BS16.encode . BSL.toStrict . B.encode
 
 -- | Converts a 'HexString' to a 'B.Binary' value
-fromHex :: B.Binary a => HexString -> a
-fromHex (HexString bs) = B.decode . BSL.fromStrict . fst . BS16.decode $ bs
+toBinary :: B.Binary a => HexString -> a
+toBinary (HexString bs) = B.decode . BSL.fromStrict . fst . BS16.decode $ bs
+
+-- | Reads a 'BS.ByteString' as raw bytes and converts to hex representation. We
+--   cannot use the instance Binary of 'BS.ByteString' because it provides
+--   a leading length, which is not what we want when dealing with raw bytes.
+fromBytes :: BS.ByteString -> HexString
+fromBytes = hexString . BS16.encode
+
+-- | Access to the raw bytes in a 'BS.ByteString' format.
+toBytes :: HexString -> BS.ByteString
+toBytes (HexString bs) = (fst . BS16.decode) bs
 
 -- | Access to a 'T.Text' representation of the 'HexString'
-asText :: HexString -> T.Text
-asText (HexString bs) = TE.decodeUtf8 bs
+toText :: HexString -> T.Text
+toText (HexString bs) = TE.decodeUtf8 bs

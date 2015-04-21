@@ -1,15 +1,10 @@
 module Data.HexStringSpec where
 
 import           Data.HexString ( hexString
-                                , toHex
-                                , fromHex
-                                , asText )
+                                , fromBytes
+                                , toBytes )
 
-import qualified Data.ByteString       as BS
 import qualified Data.ByteString.Char8 as BS8
-import qualified Data.Text             as T
-
-import qualified Data.Binary as B ( encode )
 
 import           Test.Hspec
 
@@ -24,3 +19,9 @@ spec = do
       putStrLn (show (hexString (BS8.pack ":"))) `shouldThrow` anyErrorCall
       putStrLn (show (hexString (BS8.pack "`"))) `shouldThrow` anyErrorCall
       putStrLn (show (hexString (BS8.pack "g"))) `shouldThrow` anyErrorCall
+
+  describe "when interpreting a hex string" $ do
+    it "should convert the hex string properly when interpreting as bytes" $
+      toBytes (hexString (BS8.pack "ffff")) `shouldBe` BS8.pack "\255\255"
+    it "should convert bytes to the proper hex string" $
+      fromBytes (BS8.pack "\255\255") `shouldBe` hexString (BS8.pack "ffff")
