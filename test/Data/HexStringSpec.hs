@@ -1,6 +1,7 @@
 module Data.HexStringSpec where
 
 import           Data.HexString ( hexString
+                                , hexString'
                                 , fromBytes
                                 , toBytes )
 
@@ -19,6 +20,9 @@ spec = do
       putStrLn (show (hexString (BS8.pack ":"))) `shouldThrow` anyErrorCall
       putStrLn (show (hexString (BS8.pack "`"))) `shouldThrow` anyErrorCall
       putStrLn (show (hexString (BS8.pack "g"))) `shouldThrow` anyErrorCall
+
+    it "should return nothing when rejecting" $
+      (hexString' (BS8.pack "/")) `shouldBe` Nothing
 
   describe "when interpreting a hex string" $ do
     it "should convert the hex string properly when interpreting as bytes" $

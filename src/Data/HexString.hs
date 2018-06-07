@@ -1,8 +1,11 @@
 module Data.HexString ( HexString
                       , hexString
+                      , hexString'
                       , fromBinary
+                      , fromBinary'
                       , toBinary
                       , fromBytes
+                      , fromBytes'
                       , toBytes
                       , toText ) where
 
@@ -27,32 +30,50 @@ data HexString =
   deriving ( Show, Eq, Ord )
 
 instance FromJSON HexString where
-  parseJSON = withText "HexString" $ pure . hexString . TE.encodeUtf8
+  parseJSON = withText "HexString" $ toParser . TE.encodeUtf8
+    where
+      toParser input = case hexString' input of
+                            (Just value) -> pure value
+                            Nothing -> fail ("Not a valid hex string: " ++ show input)
 
 instance ToJSON HexString where
   toJSON = String . toText
 
 -- | Smart constructor which validates that all the text are actually
 --   hexadecimal characters.
-hexString :: BS.ByteString -> HexString
-hexString bs =
+hexString' :: BS.ByteString -> Maybe HexString
+hexString' bs =
   let isValidHex :: Word8 -> Bool
       isValidHex c
         | (48 <= c) && (c < 58)  = True
         | (97 <= c) && (c < 103) = True
         | otherwise              = False
-
   in if   BS.all isValidHex bs
-     then HexString bs
-     else error ("Not a valid hex string: " ++ show bs)
+     then Just (HexString bs)
+     else Nothing
+
+hexString :: BS.ByteString -> HexString
+hexString bs = case hexString' bs of
+                    Just hex -> hex
+                    Nothing -> error ("Not a valid hex string: " ++ show bs)
+
+-- | Converts a 'B.Binary' to a 'Maybe HexString' value
+fromBinary' :: B.Binary a  => a -> Maybe HexString
+fromBinary' = hexString' . BS16.encode . BSL.toStrict . B.encode
 
 -- | Converts a 'B.Binary' to a 'HexString' value
-fromBinary :: B.Binary a  => a -> HexString
+fromBinary :: B.Binary a => a -> HexString
 fromBinary = hexString . BS16.encode . BSL.toStrict . B.encode
 
 -- | Converts a 'HexString' to a 'B.Binary' value
 toBinary :: B.Binary a => HexString -> a
 toBinary (HexString bs) = B.decode . BSL.fromStrict . fst . BS16.decode $ bs
+
+-- | Reads a 'BS.ByteString' as raw bytes and converts to hex representation. We
+--   cannot use the instance Binary of 'BS.ByteString' because it provides
+--   a leading length, which is not what we want when dealing with raw bytes.
+fromBytes' :: BS.ByteString -> Maybe HexString
+fromBytes' = hexString' . BS16.encode
 
 -- | Reads a 'BS.ByteString' as raw bytes and converts to hex representation. We
 --   cannot use the instance Binary of 'BS.ByteString' because it provides
